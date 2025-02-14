@@ -1,47 +1,38 @@
-from moviepy import VideoFileClip, concatenate_videoclips
+from moviepy import VideoFileClip
 import numpy as np
 import cv2
 
 class FlashCut:
     @staticmethod
-    def create(clips, cut_duration=0.1, flash_intensity=1.0):
-        """Create rapid cuts between video clips with flash transition.
+    def create(clip, timestamps, cut_duration=0.1, flash_intensity=1.0):
+        """Create flash transitions at specified timestamps.
         
         Args:
-            clips (list): List of video clips to join with flash transitions
-            cut_duration (float): Duration of flash transition effect
-            flash_intensity (float): Intensity of flash effect (0 to 1)
+            clip: The video clip to add transitions to
+            timestamps: List of timestamps where to add flash effects
+            cut_duration: Duration of flash transition effect
+            flash_intensity: Intensity of flash effect (0 to 1)
         """
-        final_clips = []
-        
-        for i, clip in enumerate(clips):
-            if i < len(clips) - 1:
-                def flash_transform(get_frame, t):
-                    frame = get_frame(t)
+        def flash_transform(get_frame, t):
+            frame = get_frame(t)
+            
+            # 检查当前时间是否接近任何一个时间戳
+            for timestamp in timestamps:
+                if timestamp - cut_duration/2 <= t <= timestamp + cut_duration/2:
+                    # 计算闪光进度（0到1）
+                    if t <= timestamp:
+                        # 淡入白光
+                        progress = (t - (timestamp - cut_duration/2)) / (cut_duration/2)
+                    else:
+                        # 淡出白光
+                        progress = 1 - (t - timestamp) / (cut_duration/2)
                     
-                    # 只在片段的最后 cut_duration 时间添加闪光效果
-                    if t >= clip.duration - cut_duration:
-                        # 计算闪光进度（0到1）
-                        progress = (t - (clip.duration - cut_duration)) / cut_duration
-                        # 创建白色帧
-                        flash = np.ones_like(frame) * 255
-                        # 混合原始帧和白色帧
-                        return cv2.addWeighted(
-                            frame, 
-                            1.0 - (progress * flash_intensity), 
-                            flash, 
-                            progress * flash_intensity, 
-                            0
-                        )
-                    return frame
-                
-                # 只对片段的最后部分应用闪光效果
-                transformed_clip = clip.transform(flash_transform)
-                final_clips.append(transformed_clip)
-            else:
-                # 最后一个片段不需要闪光效果
-                final_clips.append(clip)
+                    flash = np.ones_like(frame) * 255
+                    alpha = min(progress * flash_intensity, 1.0)  # 限制最大透明度
+                    return cv2.addWeighted(frame, 1.0 - alpha, flash, alpha, 0)
+            
+            return frame
         
-        # 连接所有片段
-        final_clip = concatenate_videoclips(final_clips)
-        return final_clip 
+        # 应用闪光效果
+        final_clip = clip.transform(flash_transform)
+        return final_clip

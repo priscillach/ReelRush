@@ -16,14 +16,8 @@ def check_dependencies():
         raise
 
 def test_video_effects():
-    try:
-        from reelrush import VideoEditor
-    except ImportError as e:
-        print(f"导入错误: {e}")
-        print("正在尝试安装依赖...")
-        check_dependencies()
-        from reelrush import VideoEditor
-
+    from reelrush import VideoEditor
+    
     # 创建视频编辑器实例
     input_path = "./origin.mp4"
     
@@ -32,7 +26,6 @@ def test_video_effects():
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"找不到输入视频文件: {input_path}")
     
-    print("正在初始化视频编辑器...")
     editor = VideoEditor(input_path)
     
     print("开始添加特效...")
@@ -58,7 +51,6 @@ def test_video_effects():
         soonness=1
     )
 
-    
     # 3. 添加冻结帧
     editor.add_freeze_frame(
         timestamp=6,
@@ -68,7 +60,7 @@ def test_video_effects():
     # 4. 添加镜头摇晃效果
     editor.add_camera_shake(
         start_time=4,
-        duration=2,
+        duration=3,
         intensity=0.3
     )
     
@@ -82,7 +74,8 @@ def test_video_effects():
     editor.add_particle_explosion(
         timestamp=25,
         duration=1.5,
-        num_particles=150
+        num_particles=300,
+        position=(0.7, 0.3)  # 在屏幕70%宽度，30%高度的位置
     )
     
     # 7. 添加动态缩放
@@ -92,20 +85,26 @@ def test_video_effects():
         zoom_factor=1.8
     )
     
-    # # 8. 添加快速切换效果
-    # editor.add_flash_cuts(
-    #     timestamps=[30, 31, 32, 33],
-    #     cut_duration=0.2,
-    #     flash_intensity=0.7
-    # )
+    # 8. 添加快速切换效果，用在片段分割间
+    editor.add_flash_cuts(
+        timestamps=[30, 31, 32, 33],
+        cut_duration=0.4,
+        flash_intensity=0.7
+    )
 
-
-    # 9. 添加滑动转场效果
+    # 9. 添加滑动转场效果，用在片段分割间
     editor.add_slide_transition(
-    timestamp=30,
+    timestamp=12,
     duration=1.0,
     direction='left'  # 可选: 'left', 'right', 'up', 'down'
 )
+    # 10. 添加滤镜效果
+    editor.add_filter(
+        filter_name='grayscale',  # 可选: 'grayscale', 'sepia', 'warm', 'cool', 'vintage'
+        start_time=15,
+        duration=5
+    )
+    
     editor.save("target.mp4", fps=30)
 
 if __name__ == "__main__":

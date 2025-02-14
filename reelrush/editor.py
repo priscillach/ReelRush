@@ -1,7 +1,7 @@
 from moviepy import VideoFileClip, TextClip, CompositeVideoClip, concatenate_videoclips
 import cv2
 import numpy as np
-from reelrush.effects.filter import VideoFilter
+from reelrush.effects.filter import VideoFilter, FilterEffect
 from reelrush.effects.text import DynamicText
 from reelrush.effects.particle import ParticleEffect
 from reelrush.effects.flash_cut import FlashCut
@@ -13,6 +13,8 @@ from reelrush.effects.zoom import DynamicZoom
 from reelrush.effects.freeze import FreezeFrame
 from reelrush.effects.slide import SlideTransition
 import os
+import json
+
 
 class VideoEditor:
     def __init__(self, video_path):
@@ -22,8 +24,33 @@ class VideoEditor:
             video_path (str): Path to the input video file
         """
         self.video_path = video_path
-        self.clip = VideoFileClip(video_path)
-        self.effects = []
+        self.base_clip = VideoFileClip(video_path)
+        self.clip = self.base_clip  # 保持 self.clip 引用，用于存储当前编辑状态
+        self.effects = []  # 存储所有特效及其时间信息
+        self.duration = self.base_clip.duration  # 跟踪视频总时长
+    
+    def _update_duration(self, start_time, end_time, new_duration):
+        """更新视频总时长"""
+        original_duration = end_time - start_time
+        duration_change = new_duration - original_duration
+        self.duration += duration_change
+        
+        # 更新后续特效的时间点
+        for effect in self.effects:
+            if effect['time'] > end_time:
+                effect['time'] += duration_change
+    
+    def _get_adjusted_time(self, timestamp):
+        """根据之前的效果调整时间点"""
+        adjusted_time = timestamp
+        for effect in self.effects:
+            if effect['type'] == 'slow_motion' and effect['time'] < timestamp:
+                # 计算慢动作效果对时间点的影响
+                effect_end = effect['time'] + effect['duration']
+                if timestamp > effect_end:
+                    time_change = effect['duration'] - (effect_end - effect['time'])
+                    adjusted_time += time_change
+        return adjusted_time
     
     def add_freeze_frame(self, timestamp, duration=2):
         """Add a freeze frame effect at the specified timestamp.
@@ -59,7 +86,7 @@ class VideoEditor:
         """
         self.clip = GlitchEffect.apply(self.clip, timestamp, duration)
     
-    def add_slow_motion(self, start_time, end_time, speed=0.5, abruptness= 0, soonness=1):
+    def add_slow_motion(self, start_time, end_time, speed=0.5, abruptness=0, soonness=1):
         """Add slow motion effect to a segment of video.
         
         Args:
@@ -67,7 +94,28 @@ class VideoEditor:
             end_time (float): End time in seconds
             speed (float): Playback speed (0.1 to 1.0)
         """
-        self.clip = SlowMotion.apply(self.clip, start_time, end_time, speed, abruptness, soonness)
+        new_duration = (end_time - start_time) / speed
+        self._update_duration(start_time, end_time, new_duration)
+        
+        self.effects.append({
+            'type': 'slow_motion',
+            'time': start_time,
+            'duration': new_duration,
+            'params': {
+                'speed': speed,
+                'abruptness': abruptness,
+                'soonness': soonness
+            }
+        })
+        
+        self.clip = SlowMotion.apply(
+            self.clip, 
+            start_time, 
+            end_time, 
+            speed,
+            abruptness,
+            soonness
+        )
 
     def add_zoom(self, timestamp, duration, zoom_factor=1.5):
         """Add dynamic zoom effect.
@@ -103,27 +151,32 @@ class VideoEditor:
             fps=fps if fps else self.clip.fps
         )
 
-    def add_filter(self, filter_type, **kwargs):
-        """Apply video filter effect.
+    def add_filter(self, filter_name, start_time, duration):
+        """Add filter effect to video.
         
         Args:
-            filter_type (str): Type of filter ('grayscale', 'sepia', 'vignette', 'rgb_shift')
-            **kwargs: Additional filter parameters
+            filter_name (str): Name of filter to apply ('grayscale', 'sepia', 'warm', 'cool', 'vintage')
+            start_time (float): Start time of filter effect
+            duration (float): Duration of filter effect
         """
-        filter_funcs = {
-            'grayscale': VideoFilter.grayscale,
-            'sepia': VideoFilter.sepia,
-            'vignette': lambda f: VideoFilter.vignette(f, kwargs.get('intensity', 0.5)),
-            'rgb_shift': lambda f: VideoFilter.rgb_shift(f, kwargs.get('offset', 10))
-        }
+        # 调整时间点以适应之前的时长变化
+        adjusted_time = self._get_adjusted_time(start_time)
         
-        if filter_type not in filter_funcs:
-            raise ValueError(f"Unknown filter type: {filter_type}")
+        # 添加效果记录
+        self.effects.append({
+            'type': 'filter',
+            'name': filter_name,
+            'time': adjusted_time,
+            'duration': duration
+        })
         
-        def apply_filter(frame, t):
-            return filter_funcs[filter_type](frame)
-        
-        self.clip = self.clip.fl(apply_filter)
+        # 应用滤镜效果
+        self.clip = FilterEffect.apply(
+            self.clip,
+            filter_name,
+            adjusted_time,
+            duration
+        )
 
     def add_animated_text(self, text, start_time, duration, 
                          position='center', fontsize=70, color='white',
@@ -144,27 +197,33 @@ class VideoEditor:
             position, fontsize, color, animation, stroke_color, stroke_width
         )
 
-    def add_particle_explosion(self, timestamp, duration=1.0, num_particles=100):
+    def add_particle_explosion(self, timestamp, duration=1.0, num_particles=100, position='center'):
         """Add particle explosion effect.
         
         Args:
             timestamp (float): Time to trigger explosion
             duration (float): Duration of effect
             num_particles (int): Number of particles
+            position (str/tuple): Position of explosion ('center' or (x,y))
         """
         particles = ParticleEffect(num_particles)
         
         def particle_transform(get_frame, t):
-            # 获取当前帧
             frame = get_frame(t)
             
             if timestamp <= t <= timestamp + duration:
-                # Get center of frame for explosion origin
+                # Get explosion origin
                 height, width = frame.shape[:2]
-                origin = (width // 2, height // 2)
+                if position == 'center':
+                    origin = (width // 2, height // 2)
+                elif isinstance(position, (tuple, list)) and len(position) == 2:
+                    # 将百分比位置转换为像素坐标
+                    origin = (int(position[0] * width), int(position[1] * height))
+                else:
+                    raise ValueError("Position must be 'center' or a tuple of (x,y) in range 0-1")
                 
                 # Initialize particles if this is the start
-                if abs(t - timestamp) < 0.1:  # 使用近似值检查
+                if abs(t - timestamp) < 0.1:
                     particles.initialize_particles(origin)
                 
                 # Update and render particles
@@ -175,53 +234,23 @@ class VideoEditor:
         self.clip = self.clip.transform(particle_transform)
 
     def add_flash_cuts(self, timestamps, cut_duration=0.1, flash_intensity=1.0):
-        """Add flash cut effect at specified timestamps.
+        """Add flash cut transitions at specified timestamps.
         
         Args:
-            timestamps (list): List of timestamps for flash transitions
-            cut_duration (float): Duration of flash transition effect
-            flash_intensity (float): Intensity of flash effect (0 to 1)
+            timestamps: List of timestamps where to add flash effects
+            cut_duration: Duration of flash transition effect
+            flash_intensity: Intensity of flash effect (0 to 1)
         """
-        # 获取基础视频
-        base_clip = self.clip
-        if isinstance(self.clip, CompositeVideoClip):
-            base_clip = self.clip.clips[0]  # 获取主视频层
+        print("\n=== Flash Cuts Debug ===")
+        print(f"Original timestamps: {timestamps}")
         
-        clips = []
-        timestamps.sort()
+        # Convert timestamps to float
+        adjusted_timestamps = [float(t) for t in timestamps]
         
-        # 处理第一个片段
-        if timestamps[0] > 0:
-            first_clip = base_clip.subclipped(0, timestamps[0])
-            if isinstance(self.clip, CompositeVideoClip):
-                # 为第一个片段添加其他效果层
-                other_layers = [layer.subclipped(0, timestamps[0]) for layer in self.clip.clips[1:]]
-                first_clip = CompositeVideoClip([first_clip] + other_layers)
-            clips.append(first_clip)
-        
-        # 处理中间片段
-        for i in range(len(timestamps) - 1):
-            start, end = timestamps[i], timestamps[i + 1]
-            current_clip = base_clip.subclipped(start, end)
-            if isinstance(self.clip, CompositeVideoClip):
-                # 为中间片段添加其他效果层
-                other_layers = [layer.subclipped(start, end) for layer in self.clip.clips[1:]]
-                current_clip = CompositeVideoClip([current_clip] + other_layers)
-            clips.append(current_clip)
-        
-        # 处理最后一个片段
-        if timestamps[-1] < self.clip.duration:
-            last_clip = base_clip.subclipped(timestamps[-1], self.clip.duration)
-            if isinstance(self.clip, CompositeVideoClip):
-                # 为最后片段添加其他效果层
-                other_layers = [layer.subclipped(timestamps[-1], self.clip.duration) 
-                              for layer in self.clip.clips[1:]]
-                last_clip = CompositeVideoClip([last_clip] + other_layers)
-            clips.append(last_clip)
-        
-        # 应用闪光切换效果
+        # Add flash cuts
         self.clip = FlashCut.create(
-            clips,
+            clip=self.clip,  # 传入整个视频片段
+            timestamps=adjusted_timestamps,  # 传入时间戳列表
             cut_duration=cut_duration,
             flash_intensity=flash_intensity
         )
