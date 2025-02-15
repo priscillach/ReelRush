@@ -40,8 +40,42 @@ class FilterEffect:
             ),
             0.3,
             0
-        )
+        ),
+        'gaussian_blur': lambda frame: cv2.GaussianBlur(frame, (21, 21), 0),
+        'box_blur': lambda frame: cv2.blur(frame, (20, 20)),
+        'glass': lambda frame: FilterEffect._frosted_glass_effect(frame),
+        'motion_blur': lambda frame: cv2.filter2D(frame, -1, FilterEffect._motion_blur_kernel())
     }
+    
+    @staticmethod
+    def _frosted_glass_effect(frame, strength=10):
+        """Create frosted glass effect."""
+        height, width = frame.shape[:2]
+        
+        # 创建随机位移映射
+        dx = np.random.randint(-strength, strength, (height, width)).astype(np.float32)
+        dy = np.random.randint(-strength, strength, (height, width)).astype(np.float32)
+        
+        # 创建映射网格
+        x, y = np.meshgrid(np.arange(width), np.arange(height))
+        
+        # 添加位移
+        map_x = (x + dx).astype(np.float32)
+        map_y = (y + dy).astype(np.float32)
+        
+        # 应用位移映射并添加模糊
+        distorted = cv2.remap(frame, map_x, map_y, cv2.INTER_LINEAR)
+        blurred = cv2.GaussianBlur(distorted, (7, 7), 0)
+        
+        return blurred
+    
+    @staticmethod
+    def _motion_blur_kernel(size=15):
+        """Create motion blur kernel."""
+        kernel = np.zeros((size, size))
+        kernel[int((size-1)/2), :] = np.ones(size)
+        kernel = kernel / size
+        return kernel
     
     @staticmethod
     def apply(clip, filter_name, start_time, duration):
@@ -49,7 +83,7 @@ class FilterEffect:
         
         Args:
             clip: Video clip to apply filter to
-            filter_name (str): Name of filter to apply ('grayscale', 'sepia', 'warm', 'cool', 'vintage')
+            filter_name (str): Name of filter to apply
             start_time (float): Start time of filter effect
             duration (float): Duration of filter effect
         """

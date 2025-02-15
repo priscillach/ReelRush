@@ -105,6 +105,21 @@ def test_video_effects():
         duration=5
     )
     
+    # 11. 添加模糊效果
+    editor.add_filter(
+        filter_name='gaussian_blur',  # 可选: 'gaussian_blur', 'box_blur', 'glass', 'motion_blur'
+        start_time=29,
+        duration=3
+    )
+    
+
+    # 12. 添加运动模糊
+    editor.add_filter(
+        filter_name='motion_blur',
+        start_time=33,
+        duration=2
+    )
+    
     editor.save("target.mp4", fps=30)
 
 if __name__ == "__main__":

@@ -155,7 +155,16 @@ class VideoEditor:
         """Add filter effect to video.
         
         Args:
-            filter_name (str): Name of filter to apply ('grayscale', 'sepia', 'warm', 'cool', 'vintage')
+            filter_name (str): Name of filter to apply:
+                - 'grayscale': Black and white effect
+                - 'sepia': Vintage brownish effect
+                - 'warm': Warm color temperature
+                - 'cool': Cool color temperature
+                - 'vintage': Retro style effect
+                - 'gaussian_blur': Soft blur effect, ideal for dream or memory scenes
+                - 'box_blur': Uniform blur effect, good for defocus simulation
+                - 'glass': Frosted glass effect, creates mystical or dreamy atmosphere
+                - 'motion_blur': Motion blur effect, emphasizes movement or speed
             start_time (float): Start time of filter effect
             duration (float): Duration of filter effect
         """
