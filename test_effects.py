@@ -54,7 +54,7 @@ def test_video_effects():
 
     # 3. 添加冻结帧
     editor.add_freeze_frame(
-        timestamp=6,
+        start_time=6,
         duration=1
     )
     
@@ -67,13 +67,13 @@ def test_video_effects():
     
     # 5. 添加画面故障效果
     editor.add_glitch(
-        timestamp=20,
+        start_time=20,
         duration=0.5
     )
     
     # 6. 添加粒子爆炸效果
     editor.add_particle_explosion(
-        timestamp=25,
+        start_time=25,
         duration=1.5,
         num_particles=300,
         position=(0.7, 0.3)  # 在屏幕70%宽度，30%高度的位置
@@ -81,7 +81,7 @@ def test_video_effects():
     
     # 7. 添加动态缩放
     editor.add_zoom(
-        timestamp=28,
+        start_time=28,
         duration=1.5,
         zoom_factor=1.8
     )
@@ -95,7 +95,7 @@ def test_video_effects():
 
     # 9. 添加滑动转场效果，用在片段分割间
     editor.add_slide_transition(
-    timestamp=12,
+    start_time=12,
     duration=1.0,
     direction='left'  # 可选: 'left', 'right', 'up', 'down'
 )

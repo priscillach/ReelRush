@@ -2,12 +2,12 @@ import cv2
 
 class DynamicZoom:
     @staticmethod
-    def apply(clip, timestamp, duration, zoom_factor=1.5):
+    def apply(clip, start_time, duration, zoom_factor=1.5):
         """Add dynamic zoom effect.
         
         Args:
             clip: Input video clip
-            timestamp: Start time of zoom
+            start_time: Start time of zoom
             duration: Duration of zoom effect
             zoom_factor: Maximum zoom level
         """
@@ -15,8 +15,8 @@ class DynamicZoom:
             # 获取当前帧
             frame = get_frame(t)
             
-            if timestamp <= t <= timestamp + duration:
-                progress = (t - timestamp) / duration
+            if start_time <= t <= start_time + duration:
+                progress = (t - start_time) / duration
                 current_zoom = 1 + (zoom_factor - 1) * progress
                 
                 h, w = frame.shape[:2]

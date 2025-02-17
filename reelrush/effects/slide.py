@@ -4,21 +4,21 @@ import cv2
 
 class SlideTransition:
     @staticmethod
-    def apply(clip, timestamp, duration=1.0, direction='left'):
+    def apply(clip, start_time, duration=1.0, direction='left'):
         """Apply slide transition effect at specified timestamp.
         
         Args:
             clip: Input video clip
-            timestamp (float): Time to trigger transition
+            start_time (float): Time to trigger transition
             duration (float): Duration of transition effect
             direction (str): Direction of slide ('left', 'right', 'up', 'down')
         """
         def slide_transform(get_frame, t):
             frame = get_frame(t)
             
-            if timestamp <= t <= timestamp + duration:
+            if start_time <= t <= start_time + duration:
                 # 计算过渡进度 (0 到 1)
-                progress = (t - timestamp) / duration
+                progress = (t - start_time) / duration
                 
                 h, w = frame.shape[:2]
                 

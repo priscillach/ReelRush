@@ -17,14 +17,20 @@ import json
 
 
 class VideoEditor:
-    def __init__(self, video_path):
+    def __init__(self, video_path, vide_file_clip=None):
         """Initialize the video editor with a video file.
         
         Args:
             video_path (str): Path to the input video file
+            video: VideoFileClip object
         """
-        self.video_path = video_path
-        self.base_clip = VideoFileClip(video_path)
+        if video_path:
+            self.video_path = video_path
+            self.base_clip = VideoFileClip(video_path)
+        elif vide_file_clip:
+            self.base_clip = vide_file_clip
+        else:
+            raise ValueError("video_path or vide_file_clip must be provided")
         self.clip = self.base_clip  # 保持 self.clip 引用，用于存储当前编辑状态
         self.effects = []  # 存储所有特效及其时间信息
         self.duration = self.base_clip.duration  # 跟踪视频总时长
@@ -52,14 +58,14 @@ class VideoEditor:
                     adjusted_time += time_change
         return adjusted_time
     
-    def add_freeze_frame(self, timestamp, duration=2):
+    def add_freeze_frame(self, start_time, duration=2):
         """Add a freeze frame effect at the specified timestamp.
         
         Args:
             timestamp (float): Time in seconds where to freeze
             duration (float): Duration of freeze in seconds
         """
-        self.clip = FreezeFrame.apply(self.clip, timestamp, duration)
+        self.clip = FreezeFrame.apply(self.clip, start_time, duration)
         
         
     def add_camera_shake(self, start_time, duration, intensity=0.5):
@@ -77,14 +83,14 @@ class VideoEditor:
             intensity
         )
     
-    def add_glitch(self, timestamp, duration=0.5):
+    def add_glitch(self, start_time, duration=0.5):
         """Add glitch effect at specified timestamp.
         
         Args:
-            timestamp (float): Time in seconds to add glitch
+            start_time (float): Time in seconds to add glitch
             duration (float): Duration of glitch effect
         """
-        self.clip = GlitchEffect.apply(self.clip, timestamp, duration)
+        self.clip = GlitchEffect.apply(self.clip, start_time, duration)
     
     def add_slow_motion(self, start_time, end_time, speed=0.5, abruptness=0, soonness=1):
         """Add slow motion effect to a segment of video.
@@ -117,15 +123,15 @@ class VideoEditor:
             soonness
         )
 
-    def add_zoom(self, timestamp, duration, zoom_factor=1.5):
+    def add_zoom(self, start_time, duration, zoom_factor=1.5):
         """Add dynamic zoom effect.
         
         Args:
-            timestamp (float): Start time of zoom
+            start_time (float): Start time of zoom
             duration (float): Duration of zoom effect
             zoom_factor (float): Maximum zoom level
         """
-        self.clip = DynamicZoom.apply(self.clip, timestamp, duration, zoom_factor)
+        self.clip = DynamicZoom.apply(self.clip, start_time, duration, zoom_factor)
 
     def add_flash(self, timestamp, duration=0.1, intensity=1.0):
         """Add flash effect.
@@ -213,11 +219,11 @@ class VideoEditor:
             blur_background
         )
 
-    def add_particle_explosion(self, timestamp, duration=1.0, num_particles=100, position='center'):
+    def add_particle_explosion(self, start_time, duration=1.0, num_particles=100, position='center'):
         """Add particle explosion effect.
         
         Args:
-            timestamp (float): Time to trigger explosion
+            start_time (float): Time to trigger explosion
             duration (float): Duration of effect
             num_particles (int): Number of particles
             position (str/tuple): Position of explosion ('center' or (x,y))
@@ -227,7 +233,7 @@ class VideoEditor:
         def particle_transform(get_frame, t):
             frame = get_frame(t)
             
-            if timestamp <= t <= timestamp + duration:
+            if start_time <= t <= start_time + duration:
                 # Get explosion origin
                 height, width = frame.shape[:2]
                 if position == 'center':
@@ -239,7 +245,7 @@ class VideoEditor:
                     raise ValueError("Position must be 'center' or a tuple of (x,y) in range 0-1")
                 
                 # Initialize particles if this is the start
-                if abs(t - timestamp) < 0.1:
+                if abs(t - start_time) < 0.1:
                     particles.initialize_particles(origin)
                 
                 # Update and render particles
@@ -271,17 +277,17 @@ class VideoEditor:
             flash_intensity=flash_intensity
         )
 
-    def add_slide_transition(self, timestamp, duration=1.0, direction='left'):
+    def add_slide_transition(self, start_time, duration=1.0, direction='left'):
         """Add slide transition effect.
         
         Args:
-            timestamp (float): Time to trigger transition
+            start_time (float): Time to trigger transition
             duration (float): Duration of transition effect
             direction (str): Direction of slide ('left', 'right', 'up', 'down')
         """
         self.clip = SlideTransition.apply(
             self.clip,
-            timestamp,
+            start_time,
             duration,
             direction
         )

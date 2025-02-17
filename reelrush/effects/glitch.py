@@ -3,12 +3,12 @@ import numpy as np
 
 class GlitchEffect:
     @staticmethod
-    def apply(clip, timestamp, duration=0.5):
+    def apply(clip, start_time, duration=0.5):
         """Add glitch effect at specified timestamp.
         
         Args:
             clip: Input video clip
-            timestamp: Time to add glitch
+            start_time: Time to add glitch
             duration: Duration of glitch effect
         """
         def glitch_transform(get_frame, t):
@@ -16,7 +16,7 @@ class GlitchEffect:
             frame = get_frame(t)
             
             # 只在指定时间段内应用故障效果
-            if timestamp <= t <= timestamp + duration:
+            if start_time <= t <= start_time + duration:
                 height, width = frame.shape[:2]
                 slice_h = int(height / 10)
                 shifts = np.random.randint(-50, 50, size=(10, 2))
