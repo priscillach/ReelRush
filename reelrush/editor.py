@@ -189,7 +189,8 @@ class VideoEditor:
 
     def add_animated_text(self, text, start_time, duration, 
                          position='center', fontsize=70, color='white',
-                         animation='fade', stroke_color='black', stroke_width=2):
+                         animation='fade', stroke_color='black', stroke_width=2,
+                         font_style='default'):
         """Add animated text overlay.
         
         Args:
@@ -200,10 +201,14 @@ class VideoEditor:
             fontsize (int): Font size
             color (str): Text color
             animation (str): Animation type ('fade', 'slide', 'scale')
+            stroke_color (str): Color of text outline
+            stroke_width (int): Width of text outline
+            font_style (str): Font style to use ('default', 'bold', 'elegant', 'modern', 'impact', 'comic')
         """
         self.clip = DynamicText.animated_text(
             self.clip, text, start_time, duration,
-            position, fontsize, color, animation, stroke_color, stroke_width
+            position, fontsize, color, animation,
+            stroke_color, stroke_width, font_style
         )
 
     def add_particle_explosion(self, timestamp, duration=1.0, num_particles=100, position='center'):
