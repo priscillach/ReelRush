@@ -7,4 +7,4 @@ from .flash import FlashEffect
 from .zoom import DynamicZoom
 from .text import DynamicText
 from .particle import ParticleEffect
-from .filter import VideoFilter 
+from .filter import FilterEffect 

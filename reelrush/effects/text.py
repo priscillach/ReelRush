@@ -59,8 +59,29 @@ class DynamicText:
     def animated_text(clip, text, start_time, duration, 
                      position='center', fontsize=70, color='white',
                      animation='fade', stroke_color='black', stroke_width=2,
-                     font_style='default'):
-        """Create animated text overlay."""
+                     font_style='default', blur_background=None):
+        """Create animated text overlay.
+        
+        Args:
+            clip: Input video clip
+            text: Text to display
+            start_time: Start time in seconds
+            duration: Duration in seconds
+            position: Text position ('center' or (x,y))
+            fontsize: Font size
+            color: Text color
+            animation: Animation type ('fade', 'slide', 'scale')
+            stroke_color: Color of text outline
+            stroke_width: Width of text outline
+            font_style: Font style to use ('default', 'bold', 'elegant', 'modern', 'impact', 'comic')
+            blur_background: Type of blur effect for text background (None, 'box_blur', 'gaussian_blur', 'glass', 'motion_blur')
+        """
+        # 如果需要模糊背景
+        if blur_background:
+            # 先对原始视频在文字显示的时间段应用模糊效果
+            from .filter import FilterEffect
+            clip = FilterEffect.apply(clip, blur_background, start_time, duration)
+        
         # 获取对应平台的字体路径
         font = DynamicText.get_font_path(font_style)
             

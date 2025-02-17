@@ -31,14 +31,6 @@ def test_video_effects():
     print("开始添加特效...")
     
     # 1. 在开始添加文字字幕
-    print("添加开场文字...")
-    # 11. 添加模糊效果
-    editor.add_filter(
-        filter_name='gaussian_blur',  # 可选: 'gaussian_blur', 'box_blur', 'glass', 'motion_blur'
-        start_time=0.5,
-        duration=3
-    )
-
     editor.add_animated_text(
         "BASKETBALL HIGHLIGHTS", 
         start_time=0.5, 
@@ -47,7 +39,8 @@ def test_video_effects():
         animation='fade',
         stroke_color='black',
         stroke_width=1,
-        font_style='elegant'  # 使用优雅的字体
+        font_style='elegant',
+        blur_background='box_blur'  # 添加背景模糊效果
     )
     
     # 2. 在精彩时刻添加慢动作
@@ -113,12 +106,12 @@ def test_video_effects():
         duration=5
     )
     
-    # # 11. 添加模糊效果
-    # editor.add_filter(
-    #     filter_name='gaussian_blur',  # 可选: 'gaussian_blur', 'box_blur', 'glass', 'motion_blur'
-    #     start_time=0.5,
-    #     duration=3
-    # )
+    # 11. 添加模糊效果
+    editor.add_filter(
+        filter_name='gaussian_blur',  # 可选: 'gaussian_blur', 'box_blur', 'glass', 'motion_blur'
+        start_time=31,
+        duration=1
+    )
     
 
     # 12. 添加运动模糊
@@ -128,7 +121,7 @@ def test_video_effects():
         duration=2
     )
     
-    # 使用醒目的字体添加强调文字
+    # 13. 使用醒目的字体添加强调文字
     editor.add_animated_text(
         "AMAZING SHOT!", 
         start_time=10.5, 
