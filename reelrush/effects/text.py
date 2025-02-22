@@ -1,7 +1,16 @@
-from moviepy import TextClip, CompositeVideoClip
+from moviepy.editor import TextClip, CompositeVideoClip
+from moviepy.video.fx import all as vfx
+from moviepy.video.compositing.transitions import crossfadein, crossfadeout
+
 import numpy as np
 import os
-from moviepy import *
+from moviepy.config import change_settings
+
+# 设置 ImageMagick 二进制文件路径
+if os.path.exists('/usr/local/bin/convert'):
+    change_settings({"IMAGEMAGICK_BINARY": "/usr/local/bin/convert"})
+elif os.path.exists('/opt/homebrew/bin/convert'):
+    change_settings({"IMAGEMAGICK_BINARY": "/opt/homebrew/bin/convert"})
 
 class DynamicText:
     # 预设字体配置
@@ -60,25 +69,9 @@ class DynamicText:
                      position='center', fontsize=70, color='white',
                      animation='fade', stroke_color='black', stroke_width=2,
                      font_style='default', blur_background=None):
-        """Create animated text overlay.
-        
-        Args:
-            clip: Input video clip
-            text: Text to display
-            start_time: Start time in seconds
-            duration: Duration in seconds
-            position: Text position ('center' or (x,y))
-            fontsize: Font size
-            color: Text color
-            animation: Animation type ('fade', 'slide', 'scale')
-            stroke_color: Color of text outline
-            stroke_width: Width of text outline
-            font_style: Font style to use ('default', 'bold', 'elegant', 'modern', 'impact', 'comic')
-            blur_background: Type of blur effect for text background (None, 'box_blur', 'gaussian_blur', 'glass', 'motion_blur')
-        """
+        """Create animated text overlay."""
         # 如果需要模糊背景
         if blur_background:
-            # 先对原始视频在文字显示的时间段应用模糊效果
             from .filter import FilterEffect
             clip = FilterEffect.apply(clip, blur_background, start_time, duration)
         
@@ -86,20 +79,29 @@ class DynamicText:
         font = DynamicText.get_font_path(font_style)
             
         txt_clip = TextClip(
-            text=text,
+            txt=text,
             font=font,
-            font_size=fontsize,
+            fontsize=fontsize,
             color=color,
             stroke_color=stroke_color,
             stroke_width=stroke_width,
             method='label',
             size=clip.size,
-            bg_color=None,
+            bg_color='transparent',
+            transparent=True
         )
         
-        txt_clip = txt_clip.with_duration(duration)
+        txt_clip = txt_clip.set_duration(duration)
         
         if animation == 'fade':
-            txt_clip = txt_clip.with_effects([vfx.CrossFadeIn(0.5), vfx.CrossFadeOut(0.5)])
+            txt_clip = txt_clip.fx(crossfadein, duration=0.5)
+            txt_clip = txt_clip.fx(crossfadeout, duration=0.5)
+
+
+
+        if position == 'center':
+            txt_clip = txt_clip.set_position('center')
+        else:
+            txt_clip = txt_clip.set_position(position)
         
-        return CompositeVideoClip([clip, txt_clip.with_start(start_time)]) 
+        return CompositeVideoClip([clip, txt_clip.set_start(start_time)]) 

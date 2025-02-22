@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from typing import List, Union, Optional, Tuple
-from moviepy import VideoFileClip
+from moviepy.editor import VideoFileClip
 from .editor import VideoEditor
 
 log = logging.getLogger()
@@ -193,6 +193,27 @@ class VideoProcessingParams:
     flash_cuts: Optional[FlashCutsParams] = None  # 闪光切换特效
     slide_transitions: List[SlideTransitionParams] = None  # 滑动转场特效列表
     filter_effects: List[FilterParams] = None     # 滤镜特效列表
+
+    def __post_init__(self):
+        """初始化后处理，将 None 转换为空列表"""
+        if self.text_effects is None:
+            self.text_effects = []
+        if self.slow_motion_effects is None:
+            self.slow_motion_effects = []
+        if self.freeze_frame_effects is None:
+            self.freeze_frame_effects = []
+        if self.camera_shake_effects is None:
+            self.camera_shake_effects = []
+        if self.glitch_effects is None:
+            self.glitch_effects = []
+        if self.particle_effects is None:
+            self.particle_effects = []
+        if self.zoom_effects is None:
+            self.zoom_effects = []
+        if self.slide_transitions is None:
+            self.slide_transitions = []
+        if self.filter_effects is None:
+            self.filter_effects = []
 
     def validate(self) -> bool:
         if not self.video_path and not self.video_file_clip:

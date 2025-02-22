@@ -100,4 +100,4 @@ class FilterEffect:
                 return filter_func(frame)
             return frame
             
-        return clip.transform(filter_transform)
+        return clip.fl(filter_transform)

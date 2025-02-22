@@ -26,4 +26,4 @@ class DynamicZoom:
                 return cv2.warpAffine(frame, M, (w, h))
             return frame
         
-        return clip.transform(zoom_transform) 
+        return clip.fl(zoom_transform) 

@@ -1,6 +1,6 @@
-from moviepy import VideoFileClip, concatenate_videoclips
-from moviepy.video.fx.FadeOut import FadeOut
-from moviepy.video.fx.FadeIn import FadeIn
+from moviepy.editor import VideoFileClip, concatenate_videoclips
+from moviepy.video.fx.fadein import fadein
+from moviepy.video.fx.fadeout import fadeout
 
 class TransitionEffect:
     @staticmethod
@@ -12,8 +12,8 @@ class TransitionEffect:
             clip2: Second video clip
             duration: Duration of the fade effect
         """
-        clip1 = clip1.FadeOut(duration)
-        clip2 = clip2.FadeIn(duration)
+        clip1 = fadeout(clip1, duration)
+        clip2 = fadein(clip2, duration)
         return concatenate_videoclips([clip1, clip2])
     
     @staticmethod

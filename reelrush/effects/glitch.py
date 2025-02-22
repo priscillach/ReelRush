@@ -36,4 +36,4 @@ class GlitchEffect:
                 return glitched
             return frame
             
-        return clip.transform(glitch_transform) 
+        return clip.fl(glitch_transform) 

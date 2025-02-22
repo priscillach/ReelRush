@@ -3,7 +3,7 @@ from .freeze import FreezeFrame
 from .shake import CameraShake
 from .glitch import GlitchEffect
 from .motion import SlowMotion
-from .flash import FlashEffect
+from .flash_cut import FlashCut
 from .zoom import DynamicZoom
 from .text import DynamicText
 from .particle import ParticleEffect

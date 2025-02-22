@@ -1,4 +1,4 @@
-from moviepy import VideoFileClip, CompositeVideoClip
+from moviepy.editor import VideoFileClip, CompositeVideoClip
 import numpy as np
 import cv2
 
@@ -41,4 +41,4 @@ class SlideTransition:
                 
             return frame
         
-        return clip.transform(slide_transform) 
+        return clip.fl(slide_transform) 

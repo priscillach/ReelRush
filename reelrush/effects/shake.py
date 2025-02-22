@@ -1,5 +1,6 @@
-from moviepy import *
+from moviepy.editor import VideoFileClip
 import numpy as np
+import cv2
 
 class CameraShake:
     @staticmethod
@@ -29,8 +30,6 @@ class CameraShake:
             M = np.float32([[1, 0, dx], [0, 1, dy]])
             
             # 应用平移变换
-            import cv2
             return cv2.warpAffine(frame, M, (w, h))
             
-        # 使用 transform 替代 fl
-        return clip.transform(shake_transform) 
+        return clip.fl(shake_transform) 

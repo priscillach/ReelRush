@@ -1,4 +1,5 @@
-from moviepy import VideoFileClip, TextClip, CompositeVideoClip, concatenate_videoclips
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, concatenate_videoclips
+from moviepy.video.fx import all as vfx
 import cv2
 import numpy as np
 from reelrush.effects.filter import FilterEffect
@@ -143,19 +144,15 @@ class VideoEditor:
         """
         self.clip = FlashEffect.apply(self.clip, timestamp, duration, intensity)
     
-    def save(self, output_path, codec='libx264', fps=None):
-        """Save the edited video.
+    def save(self, output_path, fps=30):
+        """Save edited video to file.
         
         Args:
-            output_path (str): Path to save the output video
-            codec (str): Video codec to use
-            fps (int, optional): Output frame rate
+            output_path: Path to save video
+            fps: Frames per second
         """
-        self.clip.write_videofile(
-            output_path,
-            codec=codec,
-            fps=fps if fps else self.clip.fps
-        )
+        # v1.0.3 使用 write_videofile
+        self.clip.write_videofile(output_path, fps=fps)
 
     def add_filter(self, filter_name, start_time, duration):
         """Add filter effect to video.
@@ -253,7 +250,7 @@ class VideoEditor:
                 return particles.render(frame.copy(), t)
             return frame
         
-        self.clip = self.clip.transform(particle_transform)
+        self.clip = self.clip.fl(particle_transform)
 
     def add_flash_cuts(self, timestamps, cut_duration=0.1, flash_intensity=1.0):
         """Add flash cut transitions at specified timestamps.
@@ -270,11 +267,11 @@ class VideoEditor:
         adjusted_timestamps = [float(t) for t in timestamps]
         
         # Add flash cuts
-        self.clip = FlashCut.create(
-            clip=self.clip,  # 传入整个视频片段
-            timestamps=adjusted_timestamps,  # 传入时间戳列表
-            cut_duration=cut_duration,
-            flash_intensity=flash_intensity
+        self.clip = FlashCut.apply(
+            self.clip,
+            adjusted_timestamps,
+            cut_duration,
+            flash_intensity
         )
 
     def add_slide_transition(self, start_time, duration=1.0, direction='left'):

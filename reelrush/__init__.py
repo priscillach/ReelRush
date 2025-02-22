@@ -5,8 +5,11 @@ from .effects import (
     CameraShake,
     GlitchEffect,
     SlowMotion,
-    FlashEffect,
-    DynamicZoom
+    FlashCut,
+    DynamicZoom,
+    DynamicText,
+    ParticleEffect,
+    FilterEffect
 )
 
 __version__ = "0.1.0" 

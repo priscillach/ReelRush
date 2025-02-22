@@ -1,19 +1,13 @@
-from moviepy import VideoFileClip, concatenate_videoclips
-from moviepy import *
+from moviepy.editor import VideoFileClip, concatenate_videoclips
+from moviepy.video.fx import all as vfx
 
 class FreezeFrame:
     @staticmethod
     def apply(clip, start_time, duration):
-        """Create a freeze frame effect.
-        
-        Args:
-            clip: Input video clip
-            start_time: Time to freeze frame
-            duration: Duration of freeze
-        """
-        # 使用 vfx.Freeze 实现冻结帧效果
-        return clip.with_effects([vfx.Freeze(
+        """Create a freeze frame effect."""
+        # v1.0.3 中没有 with_effects，需要直接使用 fx 方法
+        return clip.fx(vfx.freeze,
             t=start_time,  # 冻结时间点
             freeze_duration=duration,  # 冻结持续时间
             padding_end=0  # 结尾填充时间
-        )]) 
+        )
