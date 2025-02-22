@@ -1,6 +1,6 @@
 from moviepy.editor import TextClip, CompositeVideoClip
 from moviepy.video.fx import all as vfx
-from moviepy.video.compositing.transitions import crossfadein, crossfadeout
+from moviepy.video.compositing.transitions import crossfadein, crossfadeout, slide_in, slide_out
 
 import numpy as np
 import os
@@ -67,7 +67,8 @@ class DynamicText:
     @staticmethod
     def animated_text(clip, text, start_time, duration, 
                      position='center', fontsize=70, color='white',
-                     animation='fade', stroke_color='black', stroke_width=2,
+                     animation='fade', fade_in_duration=0.5, fade_out_duration=0.5,
+                     stroke_color='black', stroke_width=2,
                      font_style='default', blur_background=None):
         """Create animated text overlay."""
         # 如果需要模糊背景
@@ -94,14 +95,29 @@ class DynamicText:
         txt_clip = txt_clip.set_duration(duration)
         
         if animation == 'fade':
-            txt_clip = txt_clip.fx(crossfadein, duration=0.5)
-            txt_clip = txt_clip.fx(crossfadeout, duration=0.5)
-
-
-
-        if position == 'center':
+            txt_clip = txt_clip.fx(crossfadein, duration=fade_in_duration)
+            txt_clip = txt_clip.fx(crossfadeout, duration=fade_out_duration)
+        elif animation == 'slide':
+            w, h = clip.size
+            
+            def make_slide_frame(t):
+                if t < fade_in_duration:  # 入场阶段：从左边滑到中间
+                    progress = t / fade_in_duration
+                    return (int(w * (progress - 1)), 'center')  # 从 -w 到 0
+                elif t < fade_in_duration + duration:  # 中间展示阶段
+                    return ('center', 'center')  # 保持在中间
+                else:  # 退场阶段：从中间滑到右边
+                    progress = (t - (fade_in_duration + duration)) / fade_out_duration
+                    return (int(w * progress), 'center')  # 从 0 到 w
+            
+            # 设置总时长为三个阶段的总和
+            total_duration = fade_in_duration + duration + fade_out_duration
+            txt_clip = txt_clip.set_duration(total_duration)
+            txt_clip = txt_clip.set_position(make_slide_frame)
+        
+        if position == 'center' and animation != 'slide':
             txt_clip = txt_clip.set_position('center')
-        else:
+        elif animation != 'slide':
             txt_clip = txt_clip.set_position(position)
         
         return CompositeVideoClip([clip, txt_clip.set_start(start_time)]) 

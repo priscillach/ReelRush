@@ -13,6 +13,7 @@ from reelrush.effects_processor import (
     FlashCutsParams,
     SlideTransitionParams,
     FilterParams,
+    CurtainEffectParams,
     process_video_effects
 )
 
@@ -37,20 +38,24 @@ def test_video_effects():
             TextEffectParams(
                 text="BASKETBALL HIGHLIGHTS",
                 start_time=0.5,
-                duration=3,
+                duration=3.0,
                 fontsize=80,
                 animation='fade',
+                fade_in_duration=3,  # 滑入时间
+                fade_out_duration=0.6,  # 滑出时间
                 stroke_color='black',
-                stroke_width=1,
+                stroke_width=2,
                 font_style='elegant',
                 blur_background='box_blur'
             ),
             TextEffectParams(
                 text="AMAZING SHOT!",
-                start_time=10.5,
+                start_time=6,
                 duration=2,
                 fontsize=100,
-                animation='fade',
+                animation='slide',
+                fade_in_duration=3,
+                fade_out_duration=0.5,
                 color='yellow',
                 stroke_color='red',
                 stroke_width=3,
@@ -124,8 +129,13 @@ def test_video_effects():
         slide_transitions=[
             SlideTransitionParams(
                 start_time=12,
-                duration=1.0,
+                duration=0.3,
                 direction='left'
+            ),
+            SlideTransitionParams(
+                start_time=12.3,
+                duration=0.3,
+                direction='right'
             )
         ],
         
@@ -145,6 +155,19 @@ def test_video_effects():
                 start_time=33,
                 duration=2,
                 filter_name='motion_blur'
+            )
+        ],
+        
+        curtain_effects=[
+            CurtainEffectParams(
+                start_time=28,
+                duration=2.0,
+                effect_type='darken'  # 或 'blur'
+            ),
+            CurtainEffectParams(
+                start_time=31,
+                duration=2.0,
+                effect_type='blur'  # 或 'blur'
             )
         ]
     )

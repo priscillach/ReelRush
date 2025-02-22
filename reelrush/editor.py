@@ -192,28 +192,16 @@ class VideoEditor:
 
     def add_animated_text(self, text, start_time, duration, 
                          position='center', fontsize=70, color='white',
-                         animation='fade', stroke_color='black', stroke_width=2,
+                         animation='fade', fade_in_duration=0.5, fade_out_duration=0.5,
+                         stroke_color='black', stroke_width=2,
                          font_style='default', blur_background=None):
-        """Add animated text overlay.
-        
-        Args:
-            text (str): Text to display
-            start_time (float): Start time in seconds
-            duration (float): Duration to display text
-            position (str/tuple): Position of text ('center' or (x,y))
-            fontsize (int): Font size
-            color (str): Text color
-            animation (str): Animation type ('fade', 'slide', 'scale')
-            stroke_color (str): Color of text outline
-            stroke_width (int): Width of text outline
-            font_style (str): Font style to use ('default', 'bold', 'elegant', 'modern', 'impact', 'comic')
-            blur_background (str): Type of blur effect for text background (None, 'box_blur', 'gaussian_blur', 'glass', 'motion_blur')
-        """
+        """Add animated text overlay to video."""
         self.clip = DynamicText.animated_text(
             self.clip, text, start_time, duration,
-            position, fontsize, color, animation,
-            stroke_color, stroke_width, font_style,
-            blur_background
+            position, fontsize, color,
+            animation, fade_in_duration, fade_out_duration,
+            stroke_color, stroke_width,
+            font_style, blur_background
         )
 
     def add_particle_explosion(self, start_time, duration=1.0, num_particles=100, position='center'):
@@ -287,4 +275,20 @@ class VideoEditor:
             start_time,
             duration,
             direction
+        )
+
+    def add_curtain_effect(self, start_time, duration, effect_type='darken'):
+        """Add curtain effect (darken/blur) to video.
+        
+        Args:
+            start_time: Start time of effect
+            duration: Duration of effect
+            effect_type: Type of effect ('darken' or 'blur')
+        """
+        from .effects.curtain import CurtainEffect
+        self.clip = CurtainEffect.apply(
+            self.clip,
+            start_time,
+            duration,
+            effect_type
         )

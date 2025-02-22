@@ -25,11 +25,13 @@ class TextEffectParams(BaseEffectParams):
     position: Union[str, Tuple[int, int]] = 'center'  # 文字位置，可以是'center'或(x,y)坐标
     fontsize: int = 70                           # 字体大小（像素）
     color: str = 'white'                         # 字体颜色
-    animation: str = 'fade'                      # 动画类型：'fade'(淡入淡出),'slide'(滑动),'scale'(缩放)
+    animation: str = 'fade'                      # 动画类型：'fade'(淡入淡出),'slide'(滑动)
+    fade_in_duration: float = 0.5                # 淡入/滑入持续时间
+    fade_out_duration: float = 0.5               # 淡出/滑出持续时间
     stroke_color: str = 'black'                  # 描边颜色
     stroke_width: int = 2                        # 描边宽度（像素）
-    font_style: str = 'default'                  # 字体样式：'default','bold','elegant','modern','impact','comic'
-    blur_background: Optional[str] = None        # 背景模糊效果：None,'box_blur','gaussian_blur','glass','motion_blur'
+    font_style: str = 'default'                  # 字体样式 'default','bold','elegant','modern','impact','comic'
+    blur_background: Optional[str] = None        # 背景模糊效果 None,'box_blur','gaussian_blur','glass','motion_blur'
 
     def validate(self) -> bool:
         if not super().validate():
@@ -43,7 +45,7 @@ class TextEffectParams(BaseEffectParams):
         if self.fontsize <= 0:
             log.error(f"Invalid font size: {self.fontsize}")
             return False
-        if self.animation not in ['fade', 'slide', 'scale']:
+        if self.animation not in ['fade', 'slide']:
             log.error(f"Invalid animation type: {self.animation}")
             return False
         return True
@@ -178,6 +180,18 @@ class FilterParams(BaseEffectParams):
             return False
         return True
 
+@dataclass
+class CurtainEffectParams(BaseEffectParams):
+    effect_type: str = 'darken'  # 'darken' 或 'blur'
+    
+    def validate(self) -> bool:
+        if not super().validate():
+            return False
+        if self.effect_type not in ['darken', 'blur']:
+            log.error(f"Invalid curtain effect type: {self.effect_type}")
+            return False
+        return True
+
 # 视频处理参数结构体
 @dataclass
 class VideoProcessingParams:
@@ -193,6 +207,7 @@ class VideoProcessingParams:
     flash_cuts: Optional[FlashCutsParams] = None  # 闪光切换特效
     slide_transitions: List[SlideTransitionParams] = None  # 滑动转场特效列表
     filter_effects: List[FilterParams] = None     # 滤镜特效列表
+    curtain_effects: List[CurtainEffectParams] = None  # 闭幕特效列表
 
     def __post_init__(self):
         """初始化后处理，将 None 转换为空列表"""
@@ -214,6 +229,8 @@ class VideoProcessingParams:
             self.slide_transitions = []
         if self.filter_effects is None:
             self.filter_effects = []
+        if self.curtain_effects is None:
+            self.curtain_effects = []
 
     def validate(self) -> bool:
         if not self.video_path and not self.video_file_clip:
@@ -253,7 +270,8 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
         ('particle', params.particle_effects),
         ('zoom', params.zoom_effects),
         ('slide', params.slide_transitions),
-        ('filter', params.filter_effects)
+        ('filter', params.filter_effects),
+        ('curtain', params.curtain_effects),
     ]
 
     for effect_type, effects in effect_lists:
@@ -281,7 +299,9 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
                 stroke_color=effect.stroke_color,
                 stroke_width=effect.stroke_width,
                 font_style=effect.font_style,
-                blur_background=effect.blur_background
+                blur_background=effect.blur_background,
+                fade_in_duration=effect.fade_in_duration,
+                fade_out_duration=effect.fade_out_duration
             )
         elif effect_type == 'slow_motion':
             editor.add_slow_motion(
@@ -331,6 +351,12 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
                 filter_name=effect.filter_name,
                 start_time=effect.start_time,
                 duration=effect.duration
+            )
+        elif effect_type == 'curtain':
+            editor.add_curtain_effect(
+                start_time=effect.start_time,
+                duration=effect.duration,
+                effect_type=effect.effect_type
             )
 
     # 最后处理 flash_cuts
