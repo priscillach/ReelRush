@@ -312,9 +312,41 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
     # 按开始时间排序
     timed_effects.sort(key=lambda x: x[1].start_time if isinstance(x[1], BaseEffectParams) else x[1]['start_time'])
 
+    # 跟踪时长变化
+    time_offset = 0.0
+
     # 按顺序应用特效
     for effect_type, effect in timed_effects:
-        if effect_type == 'flash_cut':
+        # 记录原始开始时间
+        original_time = effect.start_time if isinstance(effect, BaseEffectParams) else effect['start_time']
+        
+        # 调整当前特效的开始时间
+        if isinstance(effect, BaseEffectParams):
+            effect.start_time += time_offset
+            adjusted_time = effect.start_time
+        else:  # flash_cut 特效
+            effect['start_time'] += time_offset
+            adjusted_time = effect['start_time']
+
+        if effect_type == 'slow_motion':
+            original_duration = effect.duration
+            new_duration = original_duration / effect.speed
+            time_delta = new_duration - original_duration
+            time_offset += time_delta
+            editor.add_slow_motion(
+                start_time=effect.start_time,
+                end_time=effect.start_time + effect.duration,
+                speed=effect.speed,
+                abruptness=effect.abruptness,
+                soonness=effect.soonness
+            )
+        elif effect_type == 'freeze':
+            time_offset += effect.duration
+            editor.add_freeze_frame(
+                start_time=effect.start_time,
+                duration=effect.duration
+            )
+        elif effect_type == 'flash_cut':
             editor.add_flash_cuts(
                 timestamps=[effect['start_time']],
                 cut_duration=effect['cut_duration'],
@@ -335,19 +367,6 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
                 blur_background=effect.blur_background,
                 fade_in_duration=effect.fade_in_duration,
                 fade_out_duration=effect.fade_out_duration
-            )
-        elif effect_type == 'slow_motion':
-            editor.add_slow_motion(
-                start_time=effect.start_time,
-                end_time=effect.start_time + effect.duration,
-                speed=effect.speed,
-                abruptness=effect.abruptness,
-                soonness=effect.soonness
-            )
-        elif effect_type == 'freeze':
-            editor.add_freeze_frame(
-                start_time=effect.start_time,
-                duration=effect.duration
             )
         elif effect_type == 'camera_shake':
             editor.add_camera_shake(

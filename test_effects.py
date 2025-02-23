@@ -51,7 +51,7 @@ def test_video_effects():
             ),
             TextEffectParams(
                 text="AMAZING SHOT!",
-                start_time=6,
+                start_time=7,
                 duration=2,
                 fontsize=100,
                 animation='slide',
@@ -79,7 +79,7 @@ def test_video_effects():
         freeze_frame_effects=[
             FreezeFrameParams(
                 start_time=6,
-                duration=1
+                duration=2
             )
         ],
         

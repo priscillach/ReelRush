@@ -248,9 +248,6 @@ class VideoEditor:
             cut_duration: Duration of flash transition effect
             flash_intensity: Intensity of flash effect (0 to 1)
         """
-        print("\n=== Flash Cuts Debug ===")
-        print(f"Original timestamps: {timestamps}")
-        
         # Convert timestamps to float
         adjusted_timestamps = [float(t) for t in timestamps]
         
