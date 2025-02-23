@@ -192,14 +192,24 @@ class CurtainEffectParams(BaseEffectParams):
             return False
         return True
 
+@dataclass
+class SoulEffectParams(BaseEffectParams):
+    intensity: float = 0.5  # 效果强度 (0-1)
+    
+    def validate(self) -> bool:
+        if not super().validate():
+            return False
+        if not 0 <= self.intensity <= 1:
+            log.error(f"Invalid soul effect intensity: {self.intensity}")
+            return False
+        return True
+
 # 视频处理参数结构体
 @dataclass
 class VideoProcessingParams:
     video_path: Optional[str] = None              # 输入视频文件路径
     video_file_clip: Optional[VideoFileClip] = None  # 或直接传入 VideoFileClip 对象
     text_effects: List[TextEffectParams] = None   # 文字特效列表
-    slow_motion_effects: List[SlowMotionParams] = None  # 慢动作特效列表
-    freeze_frame_effects: List[FreezeFrameParams] = None  # 冻结帧特效列表
     camera_shake_effects: List[CameraShakeParams] = None  # 镜头抖动特效列表
     glitch_effects: List[GlitchParams] = None     # 故障特效列表
     particle_effects: List[ParticleExplosionParams] = None  # 粒子爆炸特效列表
@@ -208,6 +218,9 @@ class VideoProcessingParams:
     slide_transitions: List[SlideTransitionParams] = None  # 滑动转场特效列表
     filter_effects: List[FilterParams] = None     # 滤镜特效列表
     curtain_effects: List[CurtainEffectParams] = None  # 闭幕特效列表
+    soul_effects: List[SoulEffectParams] = None  # 灵魂出窍特效列表
+    slow_motion_effects: List[SlowMotionParams] = None  # 慢动作特效列表
+    freeze_frame_effects: List[FreezeFrameParams] = None  # 冻结帧特效列表
 
     def __post_init__(self):
         """初始化后处理，将 None 转换为空列表"""
@@ -231,6 +244,8 @@ class VideoProcessingParams:
             self.filter_effects = []
         if self.curtain_effects is None:
             self.curtain_effects = []
+        if self.soul_effects is None:
+            self.soul_effects = []
 
     def validate(self) -> bool:
         if not self.video_path and not self.video_file_clip:
@@ -263,8 +278,6 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
     # 添加各类特效到列表
     effect_lists = [
         ('text', params.text_effects),
-        ('slow_motion', params.slow_motion_effects),
-        ('freeze', params.freeze_frame_effects),
         ('camera_shake', params.camera_shake_effects),
         ('glitch', params.glitch_effects),
         ('particle', params.particle_effects),
@@ -272,6 +285,9 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
         ('slide', params.slide_transitions),
         ('filter', params.filter_effects),
         ('curtain', params.curtain_effects),
+        ('soul', params.soul_effects),
+        ('slow_motion', params.slow_motion_effects),
+        ('freeze', params.freeze_frame_effects),
     ]
 
     for effect_type, effects in effect_lists:
@@ -357,6 +373,12 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
                 start_time=effect.start_time,
                 duration=effect.duration,
                 effect_type=effect.effect_type
+            )
+        elif effect_type == 'soul':
+            editor.add_soul_effect(
+                start_time=effect.start_time,
+                duration=effect.duration,
+                intensity=effect.intensity
             )
 
     # 最后处理 flash_cuts

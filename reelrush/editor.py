@@ -292,3 +292,19 @@ class VideoEditor:
             duration,
             effect_type
         )
+
+    def add_soul_effect(self, start_time, duration, intensity=0.5):
+        """Add soul-leaving effect to video.
+        
+        Args:
+            start_time: Start time of effect
+            duration: Duration of effect
+            intensity: Effect intensity (0-1)
+        """
+        from .effects.soul import SoulEffect
+        self.clip = SoulEffect.apply(
+            self.clip,
+            start_time,
+            duration,
+            intensity
+        )

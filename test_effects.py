@@ -14,7 +14,8 @@ from reelrush.effects_processor import (
     SlideTransitionParams,
     FilterParams,
     CurtainEffectParams,
-    process_video_effects
+    SoulEffectParams,
+    process_video_effects,
 )
 
 def check_dependencies():
@@ -168,6 +169,14 @@ def test_video_effects():
                 start_time=31,
                 duration=2.0,
                 effect_type='blur'  # 或 'blur'
+            )
+        ],
+        
+        soul_effects=[
+            SoulEffectParams(
+                start_time=25.0,
+                duration=1.5,
+                intensity=0.7
             )
         ]
     )
