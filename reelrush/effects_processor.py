@@ -290,6 +290,7 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
         ('freeze', params.freeze_frame_effects),
     ]
 
+    # 添加常规特效
     for effect_type, effects in effect_lists:
         if effects:
             for effect in effects:
@@ -297,13 +298,29 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
                     timed_effects.append((effect_type, effect))
                 else:
                     log.warning(f"Skipping invalid {effect_type} effect")
+    
+    # 添加 flash_cuts 特效
+    if params.flash_cuts and params.flash_cuts.validate():
+        # 将每个时间点作为一个独立的特效添加到列表中
+        for timestamp in params.flash_cuts.timestamps:
+            timed_effects.append(('flash_cut', {
+                'start_time': timestamp,
+                'cut_duration': params.flash_cuts.cut_duration,
+                'flash_intensity': params.flash_cuts.flash_intensity
+            }))
 
     # 按开始时间排序
-    timed_effects.sort(key=lambda x: x[1].start_time)
+    timed_effects.sort(key=lambda x: x[1].start_time if isinstance(x[1], BaseEffectParams) else x[1]['start_time'])
 
     # 按顺序应用特效
     for effect_type, effect in timed_effects:
-        if effect_type == 'text':
+        if effect_type == 'flash_cut':
+            editor.add_flash_cuts(
+                timestamps=[effect['start_time']],
+                cut_duration=effect['cut_duration'],
+                flash_intensity=effect['flash_intensity']
+            )
+        elif effect_type == 'text':
             editor.add_animated_text(
                 text=effect.text,
                 start_time=effect.start_time,
@@ -380,17 +397,6 @@ def process_video_effects(params: VideoProcessingParams, output_path: str, fps: 
                 duration=effect.duration,
                 intensity=effect.intensity
             )
-
-    # 最后处理 flash_cuts
-    if params.flash_cuts:
-        if params.flash_cuts.validate():
-            editor.add_flash_cuts(
-                timestamps=params.flash_cuts.timestamps,
-                cut_duration=params.flash_cuts.cut_duration,
-                flash_intensity=params.flash_cuts.flash_intensity
-            )
-        else:
-            log.warning("Skipping invalid flash_cuts effect")
 
     # 保存结果
     editor.save(output_path, fps=fps) 
